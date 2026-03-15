@@ -1,231 +1,316 @@
 // ================================================================
 // ResearchGen AI — Claude API Engine (Real AI)
-// Calls Anthropic API directly from browser to generate research
+// Split into 3 focused calls to avoid token limits & parse errors
 // ================================================================
 
 import { ResearchRun, IdeaInput } from './types';
 
-const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
+const API_URL = 'https://api.anthropic.com/v1/messages';
+const MODEL   = 'claude-sonnet-4-6';
 
-function buildResearchPrompt(idea: IdeaInput): string {
-  const depthLabel = { quick: '빠른 분석 (핵심 인사이트)', standard: '표준 분석 (전체 파이프라인)', deep: '심층 분석 (고급 인사이트)' }[idea.depth];
+// ── Helpers ────────────────────────────────────────────────────
 
-  return `당신은 전문 UX 리서처입니다. 다음 제품 아이디어에 대한 포괄적인 UX 리서치 데이터를 한국어로 생성하세요.
+function extractJSON(raw: string): unknown {
+  // Strip markdown code fences anywhere in the string
+  let text = raw
+    .replace(/```(?:json)?/gi, '')
+    .replace(/```/g, '')
+    .trim();
 
-제품 정보:
-- 아이디어: ${idea.description}
-- 카테고리: ${idea.category}
-- 플랫폼: ${idea.platforms.join(', ')}
-- 분석 깊이: ${depthLabel}
+  // Find outermost { ... }
+  const start = text.indexOf('{');
+  const end   = text.lastIndexOf('}');
+  if (start === -1 || end === -1 || end <= start) {
+    console.error('[ResearchGen] No JSON object found in:\n', raw.slice(0, 500));
+    throw new Error('응답에서 JSON을 찾을 수 없습니다.');
+  }
+  const jsonStr = text.slice(start, end + 1);
+  try {
+    return JSON.parse(jsonStr);
+  } catch (e) {
+    console.error('[ResearchGen] JSON parse error. Raw snippet:\n', jsonStr.slice(0, 800));
+    throw new Error('AI 응답 JSON 파싱 실패 — 다시 시도해주세요.');
+  }
+}
 
-아래 JSON 구조에 맞게 실제 제품에 특화된 현실적이고 구체적인 UX 리서치 데이터를 생성하세요. 모든 텍스트는 한국어로 작성하세요.
+async function callClaude(
+  apiKey: string,
+  prompt: string,
+  systemMsg = '당신은 전문 UX 리서치 AI입니다. 지시한 JSON 구조를 정확하게 반환합니다. 추가 설명 없이 순수 JSON만 출력하세요.',
+): Promise<unknown> {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: 4096,
+      system: systemMsg,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  });
 
-중요: 마크다운 없이 순수 JSON만 반환하세요. 코드 블록(\`\`\`)을 사용하지 마세요.
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    const msg = (err as { error?: { message?: string } })?.error?.message
+      || `API 오류 ${res.status}`;
+    console.error('[ResearchGen] API error:', msg);
+    throw new Error(msg);
+  }
+
+  const data = await res.json() as { content?: { text?: string }[] };
+  const rawText = data?.content?.[0]?.text ?? '';
+  console.log('[ResearchGen] Raw response (' + rawText.length + ' chars):\n', rawText.slice(0, 300));
+  return extractJSON(rawText);
+}
+
+// ── Part 1: AI Analysis + Competitor Analysis ──────────────────
+
+function buildPart1Prompt(idea: IdeaInput): string {
+  return `제품 아이디어: "${idea.description}"
+카테고리: ${idea.category} | 플랫폼: ${idea.platforms.join(', ')}
+
+아래 JSON 형식으로 aiAnalysis와 competitorAnalysis를 생성하세요.
+숫자 필드에는 반드시 숫자(정수/소수)만 넣으세요. 설명 텍스트를 넣지 마세요.
 
 {
   "aiAnalysis": {
-    "problemInterpretation": "이 제품이 해결하는 핵심 문제를 2-3문장으로 구체적으로 해석한 내용",
+    "problemInterpretation": "2~3문장의 핵심 문제 해석",
     "targetSegments": [
-      {"name": "세그먼트명", "percentage": 숫자}
+      {"name": "세그먼트명", "percentage": 35},
+      {"name": "세그먼트명", "percentage": 28},
+      {"name": "세그먼트명", "percentage": 22},
+      {"name": "세그먼트명", "percentage": 15}
     ],
     "insights": [
-      {
-        "id": "i1",
-        "title": "인사이트 제목",
-        "description": "인사이트 설명 2문장",
-        "confidence": 60에서95사이숫자,
-        "category": "user_preference 또는 psychology 또는 accessibility 또는 trend 중 하나"
-      }
+      {"id": "i1", "title": "제목", "description": "설명", "confidence": 82, "category": "user_preference"},
+      {"id": "i2", "title": "제목", "description": "설명", "confidence": 74, "category": "psychology"},
+      {"id": "i3", "title": "제목", "description": "설명", "confidence": 68, "category": "accessibility"},
+      {"id": "i4", "title": "제목", "description": "설명", "confidence": 88, "category": "trend"}
     ],
-    "hmwQuestions": ["HMW 질문 5개 배열"]
+    "hmwQuestions": ["HMW 질문1", "HMW 질문2", "HMW 질문3", "HMW 질문4", "HMW 질문5"]
   },
   "competitorAnalysis": {
     "competitors": [
-      {
-        "id": "c1",
-        "name": "경쟁사명",
-        "platform": "Web/Mobile 등",
-        "uxScore": 1에서5사이소수,
-        "downloads": "사용자수 문자열",
-        "pros": ["장점1", "장점2", "장점3"],
-        "cons": ["단점1", "단점2", "단점3"]
-      }
+      {"id": "c1", "name": "경쟁사1", "platform": "Web/Mobile", "uxScore": 4.2, "downloads": "200만+", "pros": ["장점1","장점2","장점3"], "cons": ["단점1","단점2","단점3"]},
+      {"id": "c2", "name": "경쟁사2", "platform": "Web", "uxScore": 4.5, "downloads": "500만+", "pros": ["장점1","장점2","장점3"], "cons": ["단점1","단점2","단점3"]},
+      {"id": "c3", "name": "경쟁사3", "platform": "Mobile", "uxScore": 3.8, "downloads": "100만+", "pros": ["장점1","장점2","장점3"], "cons": ["단점1","단점2","단점3"]},
+      {"id": "c4", "name": "경쟁사4", "platform": "Web/Mobile", "uxScore": 4.0, "downloads": "300만+", "pros": ["장점1","장점2","장점3"], "cons": ["단점1","단점2","단점3"]}
     ],
     "featureComparison": [
-      {"feature": "기능명", "competitor1name": "가능 또는 제한 또는 불가"}
+      {"feature": "기능1", "경쟁사1": "가능", "경쟁사2": "제한", "경쟁사3": "불가", "경쟁사4": "가능"},
+      {"feature": "기능2", "경쟁사1": "제한", "경쟁사2": "가능", "경쟁사3": "가능", "경쟁사4": "불가"},
+      {"feature": "기능3", "경쟁사1": "가능", "경쟁사2": "불가", "경쟁사3": "제한", "경쟁사4": "가능"},
+      {"feature": "기능4", "경쟁사1": "불가", "경쟁사2": "가능", "경쟁사3": "가능", "경쟁사4": "제한"},
+      {"feature": "기능5", "경쟁사1": "가능", "경쟁사2": "가능", "경쟁사3": "불가", "경쟁사4": "가능"},
+      {"feature": "기능6", "경쟁사1": "제한", "경쟁사2": "제한", "경쟁사3": "가능", "경쟁사4": "불가"}
     ],
     "gaps": [
-      {"title": "갭 제목", "description": "갭 설명", "priority": "high 또는 medium 또는 low"}
+      {"title": "갭 제목1", "description": "설명", "priority": "high"},
+      {"title": "갭 제목2", "description": "설명", "priority": "high"},
+      {"title": "갭 제목3", "description": "설명", "priority": "medium"}
     ],
     "sentimentData": [
-      {"name": "경쟁사명", "positive": 숫자, "neutral": 숫자, "negative": 숫자}
-    ]
-  },
-  "reviewAnalysis": {
-    "sentiment": {"positive": 숫자, "neutral": 숫자, "negative": 숫자},
-    "topComplaints": ["불만사항 5개"],
-    "praisedFeatures": ["칭찬 기능 5개"],
-    "featureRequests": ["기능 요청 5개"],
-    "topicClusters": ["토픽 클러스터 5개"],
-    "reviews": [
-      {"id": "r1", "content": "실제 리뷰 내용", "sentiment": "positive 또는 neutral 또는 negative", "rating": 1에서5숫자}
-    ]
-  },
-  "insightMap": {
-    "nodes": [
-      {
-        "id": "n1",
-        "type": "ai 또는 competitor 또는 review 또는 user",
-        "title": "노드 제목",
-        "description": "노드 설명",
-        "evidenceCount": 숫자,
-        "confidence": 60에서99사이숫자,
-        "position": {"x": 숫자, "y": 숫자}
-      }
-    ],
-    "edges": [
-      {"id": "e1", "source": "n1", "target": "n2"}
-    ]
-  },
-  "personas": [
-    {
-      "id": "p1",
-      "name": "한국인 이름",
-      "age": "나이 직업",
-      "occupation": "직업",
-      "location": "위치",
-      "expertise": 1에서10숫자,
-      "engagement": 1에서10숫자,
-      "traits": [{"name": "특성명", "value": 0에서100숫자}],
-      "goals": ["목표1", "목표2", "목표3"],
-      "painPoints": ["페인포인트1", "페인포인트2", "페인포인트3"],
-      "quote": "이 사용자의 인상적인 인용구",
-      "avatarColor": "#HEX색상"
-    }
-  ],
-  "journey": {
-    "stages": [
-      {
-        "name": "영어스테이지명",
-        "koreanName": "한국어스테이지명",
-        "actions": ["행동1", "행동2", "행동3"],
-        "pains": ["페인1", "페인2"],
-        "expectations": ["기대1", "기대2"],
-        "emotion": -2에서2사이정수
-      }
-    ],
-    "emotionCurve": [{"stage": "스테이지명", "score": 0에서100숫자}],
-    "coreIssues": ["핵심 이슈 3개"],
-    "aiRecommendations": ["AI 추천사항 3개"]
-  },
-  "opportunities": [
-    {
-      "id": "o1",
-      "title": "기회 제목",
-      "description": "기회 설명",
-      "value": 1에서10숫자,
-      "effort": 1에서10숫자,
-      "quadrant": "quick-win 또는 strategic 또는 fill-in 또는 low-priority"
-    }
-  ],
-  "report": {
-    "executiveSummary": "경영진 요약 3-4문장",
-    "keyInsights": [
-      {"title": "인사이트 제목", "description": "인사이트 설명", "icon": "이모지"}
-    ],
-    "opportunityMapping": [
-      {"title": "기회 제목", "priority": "🔴 긴급 또는 🟡 높음 또는 🟢 중간", "impact": "예상 임팩트"}
-    ],
-    "recommendations": [
-      {"area": "영역", "action": "액션 설명", "timeline": "기간", "priority": "긴급 또는 높음 또는 중간"}
-    ],
-    "nextSteps": [
-      {"phase": "Phase 1", "items": ["항목1", "항목2"], "timeline": "기간"}
+      {"name": "경쟁사1", "positive": 68, "neutral": 20, "negative": 12},
+      {"name": "경쟁사2", "positive": 74, "neutral": 17, "negative": 9},
+      {"name": "경쟁사3", "positive": 52, "neutral": 25, "negative": 23},
+      {"name": "경쟁사4", "positive": 81, "neutral": 13, "negative": 6}
     ]
   }
 }
 
-규칙:
-- competitors는 정확히 4개 생성
-- featureComparison은 6개 기능, 각 경쟁사별 컬럼 포함
-- reviews는 정확히 8개 생성
-- insightMap nodes는 7개, edges는 7개 생성 (source/target은 유효한 노드 id 사용)
-- personas는 정확히 3개 생성
-- journey stages는 4개 (Discovery, Onboarding, Usage, Retention)
-- emotionCurve는 4개 항목
-- opportunities는 8개 생성
-- keyInsights는 6개, opportunityMapping은 4개, recommendations는 4개, nextSteps는 3개
-- featureComparison 객체의 feature 키 외 나머지 키는 반드시 competitor 이름과 정확히 일치
-- sentiment의 positive + neutral + negative = 100
-- sentimentData의 각 항목도 positive + neutral + negative = 100
-- avatarColor는 #4F46E5, #0EA5E9, #10B981 순서로 사용`;
+위 구조 그대로, 경쟁사명은 실제 관련 서비스로, featureComparison의 컬럼 키는 competitors의 name 값과 정확히 일치하게, 모든 텍스트는 한국어로 채워서 JSON만 반환하세요.`;
 }
+
+// ── Part 2: Review + InsightMap + Personas ─────────────────────
+
+function buildPart2Prompt(idea: IdeaInput): string {
+  return `제품 아이디어: "${idea.description}"
+카테고리: ${idea.category} | 플랫폼: ${idea.platforms.join(', ')}
+
+아래 JSON 형식으로 reviewAnalysis, insightMap, personas 3개 섹션을 생성하세요.
+숫자 필드는 반드시 숫자만, 모든 텍스트는 한국어로, JSON만 반환하세요.
+
+{
+  "reviewAnalysis": {
+    "sentiment": {"positive": 58, "neutral": 22, "negative": 20},
+    "topComplaints": ["불만1", "불만2", "불만3", "불만4", "불만5"],
+    "praisedFeatures": ["칭찬1", "칭찬2", "칭찬3", "칭찬4", "칭찬5"],
+    "featureRequests": ["요청1", "요청2", "요청3", "요청4", "요청5"],
+    "topicClusters": ["토픽1", "토픽2", "토픽3", "토픽4", "토픽5"],
+    "reviews": [
+      {"id": "r1", "content": "리뷰 내용", "sentiment": "positive", "rating": 5},
+      {"id": "r2", "content": "리뷰 내용", "sentiment": "negative", "rating": 2},
+      {"id": "r3", "content": "리뷰 내용", "sentiment": "positive", "rating": 4},
+      {"id": "r4", "content": "리뷰 내용", "sentiment": "negative", "rating": 2},
+      {"id": "r5", "content": "리뷰 내용", "sentiment": "neutral",  "rating": 3},
+      {"id": "r6", "content": "리뷰 내용", "sentiment": "positive", "rating": 5},
+      {"id": "r7", "content": "리뷰 내용", "sentiment": "positive", "rating": 4},
+      {"id": "r8", "content": "리뷰 내용", "sentiment": "negative", "rating": 3}
+    ]
+  },
+  "insightMap": {
+    "nodes": [
+      {"id": "n1", "type": "ai",         "title": "제목", "description": "설명", "evidenceCount": 24, "confidence": 87, "position": {"x": 300, "y": 150}},
+      {"id": "n2", "type": "competitor", "title": "제목", "description": "설명", "evidenceCount": 18, "confidence": 92, "position": {"x": 600, "y": 100}},
+      {"id": "n3", "type": "review",     "title": "제목", "description": "설명", "evidenceCount": 56, "confidence": 94, "position": {"x": 150, "y": 320}},
+      {"id": "n4", "type": "user",       "title": "제목", "description": "설명", "evidenceCount": 89, "confidence": 78, "position": {"x": 450, "y": 300}},
+      {"id": "n5", "type": "review",     "title": "제목", "description": "설명", "evidenceCount": 67, "confidence": 81, "position": {"x": 680, "y": 320}},
+      {"id": "n6", "type": "ai",         "title": "제목", "description": "설명", "evidenceCount": 31, "confidence": 85, "position": {"x": 300, "y": 480}},
+      {"id": "n7", "type": "competitor", "title": "제목", "description": "설명", "evidenceCount": 42, "confidence": 96, "position": {"x": 550, "y": 480}}
+    ],
+    "edges": [
+      {"id": "e1", "source": "n1", "target": "n4"},
+      {"id": "e2", "source": "n2", "target": "n1"},
+      {"id": "e3", "source": "n3", "target": "n4"},
+      {"id": "e4", "source": "n3", "target": "n6"},
+      {"id": "e5", "source": "n5", "target": "n4"},
+      {"id": "e6", "source": "n4", "target": "n7"},
+      {"id": "e7", "source": "n6", "target": "n4"}
+    ]
+  },
+  "personas": [
+    {
+      "id": "p1", "name": "한국 이름", "age": "29세 | 직업", "occupation": "직업명", "location": "서울 지역",
+      "expertise": 7, "engagement": 8,
+      "traits": [{"name": "분석력","value": 85}, {"name": "기술 친화성","value": 70}, {"name": "협업 선호","value": 90}, {"name": "리스크 회피","value": 40}],
+      "goals": ["목표1", "목표2", "목표3"],
+      "painPoints": ["페인포인트1", "페인포인트2", "페인포인트3"],
+      "quote": "인상적인 한 문장 인용구",
+      "avatarColor": "#4F46E5"
+    },
+    {
+      "id": "p2", "name": "한국 이름", "age": "35세 | 직업", "occupation": "직업명", "location": "서울 지역",
+      "expertise": 9, "engagement": 6,
+      "traits": [{"name": "분석력","value": 95}, {"name": "기술 친화성","value": 88}, {"name": "협업 선호","value": 60}, {"name": "리스크 회피","value": 75}],
+      "goals": ["목표1", "목표2", "목표3"],
+      "painPoints": ["페인포인트1", "페인포인트2", "페인포인트3"],
+      "quote": "인상적인 한 문장 인용구",
+      "avatarColor": "#0EA5E9"
+    },
+    {
+      "id": "p3", "name": "한국 이름", "age": "24세 | 직업", "occupation": "직업명", "location": "판교 지역",
+      "expertise": 4, "engagement": 9,
+      "traits": [{"name": "분석력","value": 65}, {"name": "기술 친화성","value": 55}, {"name": "협업 선호","value": 95}, {"name": "리스크 회피","value": 30}],
+      "goals": ["목표1", "목표2", "목표3"],
+      "painPoints": ["페인포인트1", "페인포인트2", "페인포인트3"],
+      "quote": "인상적인 한 문장 인용구",
+      "avatarColor": "#10B981"
+    }
+  ]
+}`;
+}
+
+// ── Part 3: Journey + Opportunities + Report ───────────────────
+
+function buildPart3Prompt(idea: IdeaInput): string {
+  return `제품 아이디어: "${idea.description}"
+카테고리: ${idea.category} | 플랫폼: ${idea.platforms.join(', ')}
+
+아래 JSON 형식으로 journey, opportunities, report 3개 섹션을 생성하세요.
+숫자 필드는 반드시 숫자만, 모든 텍스트는 한국어로, JSON만 반환하세요.
+
+{
+  "journey": {
+    "stages": [
+      {"name": "Discovery",  "koreanName": "발견",   "actions": ["행동1","행동2","행동3"], "pains": ["페인1","페인2"], "expectations": ["기대1","기대2"], "emotion": 1},
+      {"name": "Onboarding", "koreanName": "온보딩", "actions": ["행동1","행동2","행동3"], "pains": ["페인1","페인2"], "expectations": ["기대1","기대2"], "emotion": -1},
+      {"name": "Usage",      "koreanName": "사용",   "actions": ["행동1","행동2","행동3"], "pains": ["페인1","페인2"], "expectations": ["기대1","기대2"], "emotion": 2},
+      {"name": "Retention",  "koreanName": "재방문", "actions": ["행동1","행동2","행동3"], "pains": ["페인1","페인2"], "expectations": ["기대1","기대2"], "emotion": 1}
+    ],
+    "emotionCurve": [
+      {"stage": "발견", "score": 70},
+      {"stage": "온보딩", "score": 35},
+      {"stage": "사용", "score": 85},
+      {"stage": "재방문", "score": 65}
+    ],
+    "coreIssues": ["핵심이슈1", "핵심이슈2", "핵심이슈3"],
+    "aiRecommendations": ["추천1", "추천2", "추천3"]
+  },
+  "opportunities": [
+    {"id": "o1", "title": "기회1", "description": "설명", "value": 9, "effort": 4, "quadrant": "quick-win"},
+    {"id": "o2", "title": "기회2", "description": "설명", "value": 8, "effort": 3, "quadrant": "quick-win"},
+    {"id": "o3", "title": "기회3", "description": "설명", "value": 9, "effort": 6, "quadrant": "strategic"},
+    {"id": "o4", "title": "기회4", "description": "설명", "value": 8, "effort": 7, "quadrant": "strategic"},
+    {"id": "o5", "title": "기회5", "description": "설명", "value": 7, "effort": 8, "quadrant": "strategic"},
+    {"id": "o6", "title": "기회6", "description": "설명", "value": 6, "effort": 7, "quadrant": "fill-in"},
+    {"id": "o7", "title": "기회7", "description": "설명", "value": 4, "effort": 2, "quadrant": "fill-in"},
+    {"id": "o8", "title": "기회8", "description": "설명", "value": 5, "effort": 8, "quadrant": "low-priority"}
+  ],
+  "report": {
+    "executiveSummary": "3~4문장의 경영진 요약",
+    "keyInsights": [
+      {"title": "인사이트1", "description": "설명", "icon": "📉"},
+      {"title": "인사이트2", "description": "설명", "icon": "🎯"},
+      {"title": "인사이트3", "description": "설명", "icon": "📱"},
+      {"title": "인사이트4", "description": "설명", "icon": "🇰🇷"},
+      {"title": "인사이트5", "description": "설명", "icon": "👥"},
+      {"title": "인사이트6", "description": "설명", "icon": "🤖"}
+    ],
+    "opportunityMapping": [
+      {"title": "기회1", "priority": "🔴 긴급", "impact": "전환율 +25% 예상"},
+      {"title": "기회2", "priority": "🔴 긴급", "impact": "작업시간 -40% 예상"},
+      {"title": "기회3", "priority": "🟡 높음", "impact": "이탈률 -18% 예상"},
+      {"title": "기회4", "priority": "🟡 높음", "impact": "시장점유 +30% 예상"}
+    ],
+    "recommendations": [
+      {"area": "영역1", "action": "액션 설명", "timeline": "4주", "priority": "긴급"},
+      {"area": "영역2", "action": "액션 설명", "timeline": "6주", "priority": "높음"},
+      {"area": "영역3", "action": "액션 설명", "timeline": "8주", "priority": "높음"},
+      {"area": "영역4", "action": "액션 설명", "timeline": "12주", "priority": "중간"}
+    ],
+    "nextSteps": [
+      {"phase": "Phase 1", "items": ["항목1", "항목2"], "timeline": "1-4주"},
+      {"phase": "Phase 2", "items": ["항목1", "항목2"], "timeline": "5-8주"},
+      {"phase": "Phase 3", "items": ["항목1", "항목2"], "timeline": "9-12주"}
+    ]
+  }
+}`;
+}
+
+// ── Main Export ────────────────────────────────────────────────
 
 export async function generateResearchWithClaude(
   idea: IdeaInput,
   apiKey: string,
   onProgress?: (msg: string) => void,
 ): Promise<ResearchRun> {
-  onProgress?.('Claude AI에 연결 중...');
+  const key = apiKey.trim();
 
-  const response = await fetch(ANTHROPIC_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey.trim(),
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 8000,
-      system:
-        '당신은 전문 UX 리서치 AI입니다. 요청된 JSON 구조에 맞게 정확하고 현실적인 데이터를 생성합니다. 반드시 순수 JSON만 반환하고, 마크다운 코드 블록이나 추가 설명을 포함하지 마세요.',
-      messages: [
-        {
-          role: 'user',
-          content: buildResearchPrompt(idea),
-        },
-      ],
-    }),
-  });
+  onProgress?.('Part 1/3 · AI 분석 + 경쟁사 분석 중...');
+  const part1 = await callClaude(key, buildPart1Prompt(idea)) as {
+    aiAnalysis: ResearchRun['aiAnalysis'];
+    competitorAnalysis: ResearchRun['competitorAnalysis'];
+  };
 
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `API 오류: ${response.status}`);
-  }
+  onProgress?.('Part 2/3 · 리뷰 분석 + 인사이트 맵 + 페르소나 중...');
+  const part2 = await callClaude(key, buildPart2Prompt(idea)) as {
+    reviewAnalysis: ResearchRun['reviewAnalysis'];
+    insightMap: ResearchRun['insightMap'];
+    personas: ResearchRun['personas'];
+  };
 
-  onProgress?.('AI 리서치 데이터 분석 중...');
+  onProgress?.('Part 3/3 · 사용자 여정 + 기회 지도 + UX 보고서 중...');
+  const part3 = await callClaude(key, buildPart3Prompt(idea)) as {
+    journey: ResearchRun['journey'];
+    opportunities: ResearchRun['opportunities'];
+    report: ResearchRun['report'];
+  };
 
-  const data = await response.json();
-  const rawText: string = data.content?.[0]?.text || '';
+  onProgress?.('리서치 데이터 통합 중...');
 
-  onProgress?.('리서치 결과 구조화 중...');
-
-  // Strip any accidental markdown fences
-  const cleaned = rawText
-    .replace(/^```(?:json)?\s*/i, '')
-    .replace(/\s*```\s*$/, '')
-    .trim();
-
-  let parsed: ResearchRun;
-  try {
-    parsed = JSON.parse(cleaned);
-  } catch {
-    throw new Error('AI 응답을 파싱할 수 없습니다. 다시 시도해주세요.');
-  }
-
-  // Assign layout positions to insight nodes if missing
-  const defaultPositions = [
-    { x: 300, y: 150 }, { x: 600, y: 100 }, { x: 150, y: 320 },
-    { x: 450, y: 300 }, { x: 680, y: 320 }, { x: 300, y: 480 }, { x: 550, y: 480 },
-  ];
-  if (parsed.insightMap?.nodes) {
-    parsed.insightMap.nodes = parsed.insightMap.nodes.map((node, i) => ({
-      ...node,
-      position: node.position ?? defaultPositions[i] ?? { x: 100 + i * 120, y: 200 },
-    }));
-  }
-
-  return parsed;
+  return {
+    aiAnalysis:          part1.aiAnalysis,
+    competitorAnalysis:  part1.competitorAnalysis,
+    reviewAnalysis:      part2.reviewAnalysis,
+    insightMap:          part2.insightMap,
+    personas:            part2.personas,
+    journey:             part3.journey,
+    opportunities:       part3.opportunities,
+    report:              part3.report,
+  };
 }
