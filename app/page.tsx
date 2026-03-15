@@ -25,7 +25,7 @@ export default function DashboardPage() {
     setProjects(getProjects());
     setShowModal(false);
     setNewName('');
-    router.push(`/project/${project.id}`);
+    router.push(`/project?id=${project.id}`);
   }
 
   function handleDelete(id: string, e: React.MouseEvent) {
@@ -119,7 +119,7 @@ export default function DashboardPage() {
             <div
               key={project.id}
               className="card"
-              onClick={() => router.push(`/project/${project.id}`)}
+              onClick={() => router.push(`/project?id=${project.id}`)}
               style={{
                 cursor: 'pointer', transition: 'all 0.2s',
                 borderTop: `4px solid var(--primary)`,

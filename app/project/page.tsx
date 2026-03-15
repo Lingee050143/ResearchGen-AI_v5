@@ -1,6 +1,6 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import StepHeader from '@/components/StepHeader';
 import IdeaInputStage from '@/components/stages/IdeaInput';
 import AIAnalysisStage from '@/components/stages/AIAnalysis';
@@ -15,8 +15,9 @@ import { getProject, saveIdeaInput, saveResearchRun, saveLastStep } from '@/lib/
 import { generateResearch } from '@/lib/mockEngine';
 import { Project, IdeaInput, ResearchRun } from '@/lib/types';
 
-export default function ProjectPage() {
-  const { id } = useParams<{ id: string }>();
+function ProjectContent() {
+  const searchParams = useSearchParams();
+  const id = searchParams.get('id') || '';
   const router = useRouter();
   const [project, setProject] = useState<Project | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
@@ -24,6 +25,7 @@ export default function ProjectPage() {
   const [analyzing, setAnalyzing] = useState(false);
 
   useEffect(() => {
+    if (!id) { router.push('/'); return; }
     const p = getProject(id);
     if (!p) { router.push('/'); return; }
     setProject(p);
@@ -32,6 +34,7 @@ export default function ProjectPage() {
   }, [id, router]);
 
   function handleIdeaSubmit(idea: IdeaInput) {
+    if (!id) return;
     setAnalyzing(true);
     saveIdeaInput(id, idea);
     // Simulate loading
@@ -47,6 +50,7 @@ export default function ProjectPage() {
   }
 
   function goToStep(step: number) {
+    if (!id) return;
     if (step < 1 || step > 9) return;
     if (step > 1 && !research) return;
     setCurrentStep(step);
@@ -56,7 +60,7 @@ export default function ProjectPage() {
 
   if (!project) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>⏳</div>
           <div style={{ color: 'var(--text-secondary)' }}>프로젝트 불러오는 중...</div>
@@ -67,7 +71,7 @@ export default function ProjectPage() {
 
   if (analyzing) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', gap: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: 24 }}>
         <div style={{
           width: 80, height: 80, borderRadius: '50%',
           border: '4px solid #EEF2FF', borderTopColor: 'var(--primary)',
@@ -83,7 +87,7 @@ export default function ProjectPage() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       {/* Step Header */}
       <StepHeader currentStep={currentStep} onStepClick={(s) => s === 1 || research ? goToStep(s) : undefined} />
 
@@ -170,5 +174,17 @@ export default function ProjectPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ProjectPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+        <div style={{ color: 'var(--text-secondary)' }}>로딩 중...</div>
+      </div>
+    }>
+      <ProjectContent />
+    </Suspense>
   );
 }
