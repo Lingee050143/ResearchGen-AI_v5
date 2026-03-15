@@ -62,6 +62,11 @@ export interface Competitor {
   downloads: string;
   pros: string[];
   cons: string[];
+  // Real competitor discovery fields
+  playStoreLink?: string;
+  appStoreLink?: string;
+  storeLink?: string;
+  coreFeatures?: string[];
 }
 
 export interface FeatureComparison {

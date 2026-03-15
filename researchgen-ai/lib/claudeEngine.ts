@@ -1,6 +1,8 @@
 // ================================================================
 // ResearchGen AI — Claude API Engine (Real AI)
-// Split into 3 focused calls to avoid token limits & parse errors
+// 5-call architecture: AI Analysis | Competitor Discovery |
+//                      Review Analysis | Insight + Persona |
+//                      Journey + Opportunities + Report
 // ================================================================
 
 import { ResearchRun, IdeaInput } from './types';
@@ -68,14 +70,44 @@ async function callClaude(
   return extractJSON(rawText);
 }
 
-// ── Part 1: AI Analysis + Competitor Analysis ──────────────────
+// ── Competitor Discovery System Prompt ─────────────────────────
+
+const COMPETITOR_SYSTEM_PROMPT = `당신은 앱 시장 경쟁사 탐색 전문 AI입니다.
+
+[핵심 역할]
+주어진 제품 아이디어와 관련된 실제 존재하는 앱/서비스를 발굴하고 상세히 분석합니다.
+한국 시장을 최우선으로, 구글 플레이스토어와 애플 앱스토어에 실제 등록된 앱을 발굴합니다.
+
+[경쟁사 선정 기준]
+1. 반드시 실제 존재하는 앱/서비스만 포함 — 허구의 앱 절대 금지
+2. 한국 사용자가 접근 가능한 서비스 우선 (국산 앱 + 글로벌 앱 포함)
+3. 해당 카테고리에서 실제로 경쟁 관계에 있는 서비스
+4. 다양한 규모의 경쟁사 포함 (대형 플랫폼, 중견, 신흥 스타트업)
+
+[스토어 링크 규칙]
+- Google Play URL 형식: https://play.google.com/store/apps/details?id=[패키지명]
+- App Store URL 형식: https://apps.apple.com/kr/app/[앱슬러그]/id[숫자ID]
+- 웹 서비스: https://www.[도메인].com 형식
+- 해당 없는 플랫폼 링크는 null 대신 필드 자체를 생략
+- 실제로 존재하는 URL만 제공 (추정 URL 금지)
+
+[다운로드 수 추정 기준]
+- 구글 플레이 기준 공개 수치 활용 (1억+, 5천만+, 1천만+, 500만+, 100만+, 10만+ 등)
+- 추정치임을 명시 (예: "약 500만+" 또는 "1천만+")
+
+[출력 규칙]
+- 반드시 순수 JSON만 출력 (마크다운 코드 블록, 설명 텍스트 금지)
+- 모든 텍스트 필드는 한국어로 작성
+- 숫자 필드는 반드시 숫자 타입 (문자열 금지)`;
+
+// ── Part 1: AI Analysis only ────────────────────────────────────
 
 function buildPart1Prompt(idea: IdeaInput): string {
   return `제품 아이디어: "${idea.description}"
 카테고리: ${idea.category} | 플랫폼: ${idea.platforms.join(', ')}
 
-아래 JSON 형식으로 aiAnalysis와 competitorAnalysis를 생성하세요.
-숫자 필드에는 반드시 숫자(정수/소수)만 넣으세요. 설명 텍스트를 넣지 마세요.
+아래 JSON 형식으로 aiAnalysis를 생성하세요.
+숫자 필드에는 반드시 숫자(정수/소수)만 넣으세요. 모든 텍스트는 한국어로.
 
 {
   "aiAnalysis": {
@@ -93,37 +125,99 @@ function buildPart1Prompt(idea: IdeaInput): string {
       {"id": "i4", "title": "제목", "description": "설명", "confidence": 88, "category": "trend"}
     ],
     "hmwQuestions": ["HMW 질문1", "HMW 질문2", "HMW 질문3", "HMW 질문4", "HMW 질문5"]
-  },
+  }
+}
+
+JSON만 반환하세요.`;
+}
+
+// ── Part C: Competitor Discovery (dedicated call) ───────────────
+
+function buildCompetitorPrompt(idea: IdeaInput): string {
+  return `제품 아이디어: "${idea.description}"
+카테고리: ${idea.category} | 플랫폼: ${idea.platforms.join(', ')}
+
+이 제품과 직접 경쟁하는 실제 앱/서비스 4개를 발굴하고 분석하세요.
+
+아래 JSON 구조를 정확히 따라 반환하세요. competitors의 name 값과 featureComparison의 컬럼 키가 정확히 일치해야 합니다.
+
+{
   "competitorAnalysis": {
     "competitors": [
-      {"id": "c1", "name": "경쟁사1", "platform": "Web/Mobile", "uxScore": 4.2, "downloads": "200만+", "pros": ["장점1","장점2","장점3"], "cons": ["단점1","단점2","단점3"]},
-      {"id": "c2", "name": "경쟁사2", "platform": "Web", "uxScore": 4.5, "downloads": "500만+", "pros": ["장점1","장점2","장점3"], "cons": ["단점1","단점2","단점3"]},
-      {"id": "c3", "name": "경쟁사3", "platform": "Mobile", "uxScore": 3.8, "downloads": "100만+", "pros": ["장점1","장점2","장점3"], "cons": ["단점1","단점2","단점3"]},
-      {"id": "c4", "name": "경쟁사4", "platform": "Web/Mobile", "uxScore": 4.0, "downloads": "300만+", "pros": ["장점1","장점2","장점3"], "cons": ["단점1","단점2","단점3"]}
+      {
+        "id": "c1",
+        "name": "실제 앱/서비스 이름",
+        "platform": "Android/iOS/Web",
+        "uxScore": 4.2,
+        "downloads": "500만+",
+        "pros": ["실제 강점1", "실제 강점2", "실제 강점3"],
+        "cons": ["실제 약점1", "실제 약점2", "실제 약점3"],
+        "playStoreLink": "https://play.google.com/store/apps/details?id=실제패키지명",
+        "appStoreLink": "https://apps.apple.com/kr/app/앱명/id실제숫자ID",
+        "storeLink": "https://www.실제도메인.com",
+        "coreFeatures": ["핵심기능1", "핵심기능2", "핵심기능3", "핵심기능4"]
+      },
+      {
+        "id": "c2",
+        "name": "실제 앱/서비스 이름",
+        "platform": "Android/iOS",
+        "uxScore": 4.5,
+        "downloads": "1천만+",
+        "pros": ["실제 강점1", "실제 강점2", "실제 강점3"],
+        "cons": ["실제 약점1", "실제 약점2", "실제 약점3"],
+        "playStoreLink": "https://play.google.com/store/apps/details?id=실제패키지명",
+        "appStoreLink": "https://apps.apple.com/kr/app/앱명/id실제숫자ID",
+        "coreFeatures": ["핵심기능1", "핵심기능2", "핵심기능3"]
+      },
+      {
+        "id": "c3",
+        "name": "실제 앱/서비스 이름",
+        "platform": "Web",
+        "uxScore": 3.8,
+        "downloads": "월 사용자 50만+",
+        "pros": ["실제 강점1", "실제 강점2", "실제 강점3"],
+        "cons": ["실제 약점1", "실제 약점2", "실제 약점3"],
+        "storeLink": "https://www.실제도메인.com",
+        "coreFeatures": ["핵심기능1", "핵심기능2", "핵심기능3"]
+      },
+      {
+        "id": "c4",
+        "name": "실제 앱/서비스 이름",
+        "platform": "Android/iOS/Web",
+        "uxScore": 4.0,
+        "downloads": "100만+",
+        "pros": ["실제 강점1", "실제 강점2", "실제 강점3"],
+        "cons": ["실제 약점1", "실제 약점2", "실제 약점3"],
+        "playStoreLink": "https://play.google.com/store/apps/details?id=실제패키지명",
+        "appStoreLink": "https://apps.apple.com/kr/app/앱명/id실제숫자ID",
+        "storeLink": "https://www.실제도메인.com",
+        "coreFeatures": ["핵심기능1", "핵심기능2", "핵심기능3"]
+      }
     ],
     "featureComparison": [
-      {"feature": "기능1", "경쟁사1": "가능", "경쟁사2": "제한", "경쟁사3": "불가", "경쟁사4": "가능"},
-      {"feature": "기능2", "경쟁사1": "제한", "경쟁사2": "가능", "경쟁사3": "가능", "경쟁사4": "불가"},
-      {"feature": "기능3", "경쟁사1": "가능", "경쟁사2": "불가", "경쟁사3": "제한", "경쟁사4": "가능"},
-      {"feature": "기능4", "경쟁사1": "불가", "경쟁사2": "가능", "경쟁사3": "가능", "경쟁사4": "제한"},
-      {"feature": "기능5", "경쟁사1": "가능", "경쟁사2": "가능", "경쟁사3": "불가", "경쟁사4": "가능"},
-      {"feature": "기능6", "경쟁사1": "제한", "경쟁사2": "제한", "경쟁사3": "가능", "경쟁사4": "불가"}
+      {"feature": "핵심기능A", "앱1이름": "가능", "앱2이름": "제한", "앱3이름": "불가", "앱4이름": "가능"},
+      {"feature": "핵심기능B", "앱1이름": "제한", "앱2이름": "가능", "앱3이름": "가능", "앱4이름": "불가"},
+      {"feature": "핵심기능C", "앱1이름": "가능", "앱2이름": "불가", "앱3이름": "제한", "앱4이름": "가능"},
+      {"feature": "핵심기능D", "앱1이름": "불가", "앱2이름": "가능", "앱3이름": "가능", "앱4이름": "제한"},
+      {"feature": "핵심기능E", "앱1이름": "가능", "앱2이름": "가능", "앱3이름": "불가", "앱4이름": "가능"},
+      {"feature": "핵심기능F", "앱1이름": "제한", "앱2이름": "제한", "앱3이름": "가능", "앱4이름": "불가"}
     ],
     "gaps": [
-      {"title": "갭 제목1", "description": "설명", "priority": "high"},
-      {"title": "갭 제목2", "description": "설명", "priority": "high"},
-      {"title": "갭 제목3", "description": "설명", "priority": "medium"}
+      {"title": "시장 갭 제목1", "description": "경쟁사들이 놓치고 있는 기회 설명", "priority": "high"},
+      {"title": "시장 갭 제목2", "description": "경쟁사들이 놓치고 있는 기회 설명", "priority": "high"},
+      {"title": "시장 갭 제목3", "description": "경쟁사들이 놓치고 있는 기회 설명", "priority": "medium"}
     ],
     "sentimentData": [
-      {"name": "경쟁사1", "positive": 68, "neutral": 20, "negative": 12},
-      {"name": "경쟁사2", "positive": 74, "neutral": 17, "negative": 9},
-      {"name": "경쟁사3", "positive": 52, "neutral": 25, "negative": 23},
-      {"name": "경쟁사4", "positive": 81, "neutral": 13, "negative": 6}
+      {"name": "앱1이름", "positive": 68, "neutral": 20, "negative": 12},
+      {"name": "앱2이름", "positive": 74, "neutral": 17, "negative": 9},
+      {"name": "앱3이름", "positive": 52, "neutral": 25, "negative": 23},
+      {"name": "앱4이름", "positive": 81, "neutral": 13, "negative": 6}
     ]
   }
 }
 
-위 구조 그대로, 경쟁사명은 실제 관련 서비스로, featureComparison의 컬럼 키는 competitors의 name 값과 정확히 일치하게, 모든 텍스트는 한국어로 채워서 JSON만 반환하세요.`;
+실제 앱 이름, 정확한 스토어 링크, 핵심 기능을 포함하여 JSON만 반환하세요.
+featureComparison 컬럼 키는 반드시 competitors의 name 값과 동일해야 합니다.`;
 }
 
 // ── Part 2a: Review Analysis only ──────────────────────────────
@@ -294,24 +388,28 @@ export async function generateResearchWithClaude(
 ): Promise<ResearchRun> {
   const key = apiKey.trim();
 
-  onProgress?.('1/4 · AI 분석 + 경쟁사 분석 중...');
+  onProgress?.('1/5 · AI 분석 중...');
   const part1 = await callClaude(key, buildPart1Prompt(idea)) as {
     aiAnalysis: ResearchRun['aiAnalysis'];
+  };
+
+  onProgress?.('2/5 · 실제 경쟁사 앱 탐색 중...');
+  const partC = await callClaude(key, buildCompetitorPrompt(idea), COMPETITOR_SYSTEM_PROMPT) as {
     competitorAnalysis: ResearchRun['competitorAnalysis'];
   };
 
-  onProgress?.('2/4 · 리뷰 분석 중...');
+  onProgress?.('3/5 · 리뷰 분석 중...');
   const part2a = await callClaude(key, buildPart2aPrompt(idea)) as {
     reviewAnalysis: ResearchRun['reviewAnalysis'];
   };
 
-  onProgress?.('3/4 · 인사이트 맵 + 페르소나 생성 중...');
+  onProgress?.('4/5 · 인사이트 맵 + 페르소나 생성 중...');
   const part2b = await callClaude(key, buildPart2bPrompt(idea)) as {
     insightMap: ResearchRun['insightMap'];
     personas: ResearchRun['personas'];
   };
 
-  onProgress?.('4/4 · 사용자 여정 + 기회 지도 + UX 보고서 생성 중...');
+  onProgress?.('5/5 · 사용자 여정 + 기회 지도 + UX 보고서 생성 중...');
   const part3 = await callClaude(key, buildPart3Prompt(idea)) as {
     journey: ResearchRun['journey'];
     opportunities: ResearchRun['opportunities'];
@@ -322,7 +420,7 @@ export async function generateResearchWithClaude(
 
   return {
     aiAnalysis:          part1.aiAnalysis,
-    competitorAnalysis:  part1.competitorAnalysis,
+    competitorAnalysis:  partC.competitorAnalysis,
     reviewAnalysis:      part2a.reviewAnalysis,
     insightMap:          part2b.insightMap,
     personas:            part2b.personas,

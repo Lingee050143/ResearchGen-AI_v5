@@ -18,8 +18,8 @@ import { getApiKey } from '@/lib/apiKeyStorage';
 import { Project, IdeaInput, ResearchRun } from '@/lib/types';
 
 const ANALYSIS_STEPS = [
-  '아이디어 분석 중...',
-  'AI 경쟁사 데이터 수집 중...',
+  'AI 문제 분석 중...',
+  '실제 경쟁 앱 탐색 중...',
   '리뷰 패턴 분석 중...',
   '인사이트 맵 구성 중...',
   '페르소나 생성 중...',

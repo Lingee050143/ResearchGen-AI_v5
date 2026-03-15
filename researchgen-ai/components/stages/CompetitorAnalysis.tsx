@@ -43,7 +43,7 @@ export default function CompetitorAnalysisStage({ data }: Props) {
               <div>
                 <div style={{ fontWeight: 800, fontSize: 16 }}>{comp.name}</div>
                 <div style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 2 }}>
-                  {comp.platform} · 다운로드 {comp.downloads}
+                  {comp.platform} · 추정 다운로드 {comp.downloads}
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
@@ -52,9 +52,38 @@ export default function CompetitorAnalysisStage({ data }: Props) {
               </div>
             </div>
             {/* UX Score bar */}
-            <div style={{ height: 4, background: '#F1F5F9', borderRadius: 2, marginBottom: 14 }}>
+            <div style={{ height: 4, background: '#F1F5F9', borderRadius: 2, marginBottom: 12 }}>
               <div style={{ height: '100%', borderRadius: 2, width: `${(comp.uxScore / 5) * 100}%`, background: COLORS[i % COLORS.length] }} />
             </div>
+            {/* Store Links */}
+            {(comp.playStoreLink || comp.appStoreLink || comp.storeLink) && (
+              <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
+                {comp.playStoreLink && (
+                  <a href={comp.playStoreLink} target="_blank" rel="noopener noreferrer"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px',
+                      background: '#EEF2FF', color: '#4F46E5', borderRadius: 6, fontSize: 11, fontWeight: 600,
+                      textDecoration: 'none', border: '1px solid #C7D2FE' }}>
+                    ▶ Play Store
+                  </a>
+                )}
+                {comp.appStoreLink && (
+                  <a href={comp.appStoreLink} target="_blank" rel="noopener noreferrer"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px',
+                      background: '#F0F9FF', color: '#0284C7', borderRadius: 6, fontSize: 11, fontWeight: 600,
+                      textDecoration: 'none', border: '1px solid #BAE6FD' }}>
+                    🍎 App Store
+                  </a>
+                )}
+                {comp.storeLink && (
+                  <a href={comp.storeLink} target="_blank" rel="noopener noreferrer"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px',
+                      background: '#F0FDF4', color: '#059669', borderRadius: 6, fontSize: 11, fontWeight: 600,
+                      textDecoration: 'none', border: '1px solid #BBF7D0' }}>
+                    🌐 웹사이트
+                  </a>
+                )}
+              </div>
+            )}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#059669', marginBottom: 6 }}>강점</div>
@@ -65,6 +94,19 @@ export default function CompetitorAnalysisStage({ data }: Props) {
                 {comp.cons.map((c, j) => <div key={j} style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 3, display: 'flex', gap: 4 }}><span>·</span>{c}</div>)}
               </div>
             </div>
+            {/* Core Features */}
+            {comp.coreFeatures && comp.coreFeatures.length > 0 && (
+              <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, letterSpacing: '0.05em' }}>핵심 기능</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                  {comp.coreFeatures.map((f, j) => (
+                    <span key={j} style={{ fontSize: 11, padding: '2px 8px', background: '#F8FAFC', border: '1px solid var(--border)', borderRadius: 999, color: 'var(--text-secondary)' }}>
+                      {f}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
