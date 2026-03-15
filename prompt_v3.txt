@@ -1,0 +1,193 @@
+{\rtf1\ansi\ansicpg949\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 HelveticaNeue-Bold;\f1\fnil\fcharset0 HelveticaNeue;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red0\green0\blue0;\red109\green109\blue109;
+}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0\c84706;\cssrgb\c0\c0\c0;\cssrgb\c50196\c50196\c50196;
+}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\deftab720
+\pard\pardeftab720\sa321\partightenfactor0
+
+\f0\b\fs48 \cf2 \expnd0\expndtw0\kerning0
+ResearchGen AI\cf0 \
+\pard\pardeftab720\partightenfactor0
+
+\f1\b0 \cf0 \
+\pard\pardeftab720\sa321\partightenfactor0
+
+\f0\b \cf2 Antigravity Vibe Coding Prompt (FINAL)\cf0 \
+\pard\pardeftab720\partightenfactor0
+
+\f1\b0\fs24 \cf2 \
+\pard\pardeftab720\sa240\partightenfactor0
+\cf2 SYSTEM ROLE\cf0 \
+\cf2 You are an autonomous full-stack software engineering agent.\cf0 \
+\cf2 You can plan system architecture, implement code, run tests, and refine implementation.\cf0 \
+\cf2 Your objective is to build a fully functional SaaS web application based on the provided UI screenshots and architecture documents.\cf0 \
+\cf2 Follow a structured execution loop:\cf0 \
+\cf2 PLAN \uc0\u8594  BUILD \u8594  TEST \u8594  REVIEW \u8594  UPDATE TASKS\cf0 \
+\cf2 Always track task progress.\cf0 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \
+\pard\pardeftab720\sa240\partightenfactor0
+\cf2 PROJECT NAME\cf0 \
+\cf2 ResearchGen AI\cf0 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \
+\pard\pardeftab720\sa240\partightenfactor0
+\cf2 PROJECT TYPE\cf0 \
+\cf2 AI-powered UX Research Analysis Web Application\cf0 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \
+\pard\pardeftab720\sa240\partightenfactor0
+\cf2 INPUT MATERIALS\cf0 \
+\cf2 The project folder contains the following resources.\cf0 \
+\cf2 Architecture documents\cf0 \
+\cf2 docs/design-system-architecture.md\cf0 \uc0\u8232 \cf2 docs/prompt-architecture.md\cf0 \
+\cf2 UI layout screenshots\cf0 \
+\cf2 ui/01_idea_input.png\cf0 \uc0\u8232 \cf2 ui/02_ai_analysis.png\cf0 \uc0\u8232 \cf2 ui/03_competitor_analysis.png\cf0 \uc0\u8232 \cf2 ui/04_review_analysis.png\cf0 \uc0\u8232 \cf2 ui/05_insight_map.png\cf0 \uc0\u8232 \cf2 ui/06_persona.png\cf0 \uc0\u8232 \cf2 ui/07_journey.png\cf0 \uc0\u8232 \cf2 ui/08_opportunity_map.png\cf0 \uc0\u8232 \cf2 ui/09_ux_report.png\cf0 \
+\cf2 Before implementation, read all files in the docs and ui folders.\cf0 \
+\cf2 Use the architecture documents to understand system behavior.\cf0 \
+\cf2 Use the UI screenshots as the visual layout reference.\cf0 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \
+\pard\pardeftab720\sa240\partightenfactor0
+\cf2 PROJECT OVERVIEW\cf0 \
+\cf2 ResearchGen AI converts product ideas into structured UX research insights.\cf0 \
+\cf2 The system automates a UX research pipeline including:\cf0 \
+\cf2 \'95 concept analysis\cf0 \uc0\u8232 \cf2 \'95 competitor discovery\cf0 \uc0\u8232 \cf2 \'95 review analysis\cf0 \uc0\u8232 \cf2 \'95 insight synthesis\cf0 \uc0\u8232 \cf2 \'95 persona generation\cf0 \uc0\u8232 \cf2 \'95 user journey generation\cf0 \uc0\u8232 \cf2 \'95 opportunity prioritization\cf0 \uc0\u8232 \cf2 \'95 UX report generation\cf0 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \
+\pard\pardeftab720\sa240\partightenfactor0
+\cf2 RESEARCH PIPELINE\cf0 \
+\cf2 The system must implement the following sequential workflow.\cf0 \
+\cf2 Stage 1\cf0 \uc0\u8232 \cf2 \uc0\u50500 \u51060 \u46356 \u50612  \u51077 \u47141 \cf0 \
+\cf2 User enters\cf0 \
+\cf2 \'95 product idea\cf0 \uc0\u8232 \cf2 \'95 product category\cf0 \uc0\u8232 \cf2 \'95 platform\cf0 \uc0\u8232 \cf2 \'95 analysis depth\cf0 \
+\cf2 Stage 2\cf0 \uc0\u8232 \cf2 AI \uc0\u48516 \u49437 \cf0 \
+\cf2 Generate\cf0 \
+\cf2 \'95 problem interpretation\cf0 \uc0\u8232 \cf2 \'95 target user segments\cf0 \uc0\u8232 \cf2 \'95 strategic insights\cf0 \uc0\u8232 \cf2 \'95 HMW questions\cf0 \
+\cf2 Stage 3\cf0 \uc0\u8232 \cf2 \uc0\u44221 \u51137 \u49324  \u48516 \u49437 \cf0 \
+\cf2 Generate\cf0 \
+\cf2 \'95 competitor list\cf0 \uc0\u8232 \cf2 \'95 UX strengths\cf0 \uc0\u8232 \cf2 \'95 UX weaknesses\cf0 \uc0\u8232 \cf2 \'95 feature comparison\cf0 \
+\cf2 Stage 4\cf0 \uc0\u8232 \cf2 \uc0\u47532 \u48624  \u48516 \u49437 \cf0 \
+\cf2 Allow CSV upload.\cf0 \
+\cf2 Generate\cf0 \
+\cf2 \'95 sentiment distribution\cf0 \uc0\u8232 \cf2 \'95 complaints\cf0 \uc0\u8232 \cf2 \'95 praised features\cf0 \uc0\u8232 \cf2 \'95 feature requests\cf0 \uc0\u8232 \cf2 \'95 topic clusters\cf0 \
+\cf2 Stage 5\cf0 \uc0\u8232 \cf2 \uc0\u51064 \u49324 \u51060 \u53944  \u47605 \cf0 \
+\cf2 Combine\cf0 \
+\cf2 AI insights\cf0 \uc0\u8232 \cf2 competitor insights\cf0 \uc0\u8232 \cf2 review insights\cf0 \
+\cf2 Create insight nodes containing\cf0 \
+\cf2 \'95 title\cf0 \uc0\u8232 \cf2 \'95 source\cf0 \uc0\u8232 \cf2 \'95 evidence count\cf0 \uc0\u8232 \cf2 \'95 confidence score\cf0 \
+\cf2 Visualize nodes as a graph.\cf0 \
+\cf2 Stage 6\cf0 \uc0\u8232 \cf2 \uc0\u54168 \u47476 \u49548 \u45208 \cf0 \
+\cf2 Generate personas from insight clusters.\cf0 \
+\cf2 Persona structure\cf0 \
+\cf2 \'95 name\cf0 \uc0\u8232 \cf2 \'95 demographics\cf0 \uc0\u8232 \cf2 \'95 psychographics\cf0 \uc0\u8232 \cf2 \'95 goals\cf0 \uc0\u8232 \cf2 \'95 pain points\cf0 \
+\cf2 Stage 7\cf0 \uc0\u8232 \cf2 \uc0\u49324 \u50857 \u51088  \u50668 \u51221 \cf0 \
+\cf2 Generate journey stages\cf0 \
+\cf2 Discovery\cf0 \uc0\u8232 \cf2 Onboarding\cf0 \uc0\u8232 \cf2 Usage\cf0 \uc0\u8232 \cf2 Retention\cf0 \
+\cf2 Include emotion curve.\cf0 \
+\cf2 Stage 8\cf0 \uc0\u8232 \cf2 \uc0\u44592 \u54924  \u51648 \u46020 \cf0 \
+\cf2 Create Impact vs Effort opportunity matrix.\cf0 \
+\cf2 Stage 9\cf0 \uc0\u8232 \cf2 UX \uc0\u48372 \u44256 \u49436 \cf0 \
+\cf2 Generate full UX research report\cf0 \
+\cf2 \'95 executive summary\cf0 \uc0\u8232 \cf2 \'95 key insights\cf0 \uc0\u8232 \cf2 \'95 opportunity mapping\cf0 \uc0\u8232 \cf2 \'95 strategy recommendations\cf0 \uc0\u8232 \cf2 \'95 next steps\cf0 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \
+\pard\pardeftab720\sa240\partightenfactor0
+\cf2 CRITICAL FEATURE\cf0 \
+\cf2 Implement persistent project workspace.\cf0 \
+\cf2 Users must be able to\cf0 \
+\cf2 \'95 create projects\cf0 \uc0\u8232 \cf2 \'95 save research runs\cf0 \uc0\u8232 \cf2 \'95 reopen research history\cf0 \uc0\u8232 \cf2 \'95 access generated reports\cf0 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \
+\pard\pardeftab720\sa240\partightenfactor0
+\cf2 SYSTEM MODULES\cf0 \
+\cf2 ConceptAnalysisEngine\cf0 \uc0\u8232 \cf2 CompetitorAnalysisEngine\cf0 \uc0\u8232 \cf2 ReviewAnalysisEngine\cf0 \uc0\u8232 \cf2 InsightEngine\cf0 \uc0\u8232 \cf2 PersonaEngine\cf0 \uc0\u8232 \cf2 JourneyEngine\cf0 \uc0\u8232 \cf2 OpportunityEngine\cf0 \uc0\u8232 \cf2 ReportEngine\cf0 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \
+\pard\pardeftab720\sa240\partightenfactor0
+\cf2 DATA MODEL\cf0 \
+\cf2 User\cf0 \uc0\u8232 \cf2 Project\cf0 \uc0\u8232 \cf2 ResearchRun\cf0 \uc0\u8232 \cf2 InsightNode\cf0 \uc0\u8232 \cf2 Persona\cf0 \uc0\u8232 \cf2 Journey\cf0 \uc0\u8232 \cf2 Opportunity\cf0 \uc0\u8232 \cf2 Report\cf0 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \
+\pard\pardeftab720\sa240\partightenfactor0
+\cf2 FILE STRUCTURE\cf0 \
+\cf2 src/\cf0 \
+\cf2 app/\cf0 \
+\cf2 page.tsx\cf0 \uc0\u8232 \cf2 dashboard/page.tsx\cf0 \uc0\u8232 \cf2 project/[id]/page.tsx\cf0 \
+\cf2 components/\cf0 \
+\cf2 Sidebar.tsx\cf0 \uc0\u8232 \cf2 StepHeader.tsx\cf0 \uc0\u8232 \cf2 InsightCard.tsx\cf0 \uc0\u8232 \cf2 PersonaCard.tsx\cf0 \uc0\u8232 \cf2 JourneyMap.tsx\cf0 \uc0\u8232 \cf2 OpportunityMatrix.tsx\cf0 \uc0\u8232 \cf2 ReportView.tsx\cf0 \
+\cf2 modules/\cf0 \
+\cf2 analysis/\cf0 \uc0\u8232 \cf2 insight/\cf0 \uc0\u8232 \cf2 persona/\cf0 \uc0\u8232 \cf2 journey/\cf0 \uc0\u8232 \cf2 opportunity/\cf0 \uc0\u8232 \cf2 report/\cf0 \
+\cf2 services/\cf0 \
+\cf2 analysisService.ts\cf0 \uc0\u8232 \cf2 storageService.ts\cf0 \
+\cf2 database/\cf0 \
+\cf2 schema.ts\cf0 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \
+\pard\pardeftab720\sa240\partightenfactor0
+\cf2 TECH STACK\cf0 \
+\cf2 Frontend\cf0 \
+\cf2 Next.js\cf0 \uc0\u8232 \cf2 React\cf0 \uc0\u8232 \cf2 TypeScript\cf0 \uc0\u8232 \cf2 Tailwind CSS\cf0 \
+\cf2 Backend\cf0 \
+\cf2 Node.js API routes\cf0 \
+\cf2 Database\cf0 \
+\cf2 SQLite or PostgreSQL\cf0 \
+\cf2 Charts\cf0 \
+\cf2 Recharts\cf0 \
+\cf2 Graph visualization\cf0 \
+\cf2 React Flow\cf0 \
+\cf2 CSV processing\cf0 \
+\cf2 CSV parsing library\cf0 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \
+\pard\pardeftab720\sa240\partightenfactor0
+\cf2 UI IMPLEMENTATION RULES\cf0 \
+\cf2 Follow the provided Design System Architecture.\cf0 \
+\cf2 Style\cf0 \
+\cf2 Minimal\cf0 \uc0\u8232 \cf2 Analytical\cf0 \uc0\u8232 \cf2 Dashboard UI\cf0 \
+\cf2 Color tokens\cf0 \
+\cf2 Primary\cf0 \uc0\u8232 \cf2 #4F46E5\cf0 \
+\cf2 Secondary\cf0 \uc0\u8232 \cf2 #1E293B\cf0 \
+\cf2 Background\cf0 \uc0\u8232 \cf2 #F8FAFC\cf0 \
+\cf2 Typography\cf0 \
+\cf2 Inter\cf0 \
+\cf2 Layout grid\cf0 \
+\cf2 1200px\cf0 \
+\cf2 Language\cf0 \
+\cf2 All UI labels must be Korean.\cf0 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \
+\pard\pardeftab720\sa240\partightenfactor0
+\cf2 AGENT TASK BOARD\cf0 \
+\cf2 TASK 1\cf0 \uc0\u8232 \cf2 Initialize project architecture and dependencies.\cf0 \
+\cf2 TASK 2\cf0 \uc0\u8232 \cf2 Implement layout system\cf0 \
+\cf2 Sidebar\cf0 \uc0\u8232 \cf2 Header step navigation\cf0 \uc0\u8232 \cf2 Main analysis container\cf0 \
+\cf2 TASK 3\cf0 \uc0\u8232 \cf2 Implement project workspace and dashboard.\cf0 \
+\cf2 TASK 4\cf0 \uc0\u8232 \cf2 Implement Idea Input screen.\cf0 \
+\cf2 TASK 5\cf0 \uc0\u8232 \cf2 Implement AI Analysis module.\cf0 \
+\cf2 TASK 6\cf0 \uc0\u8232 \cf2 Implement Competitor Analysis module.\cf0 \
+\cf2 TASK 7\cf0 \uc0\u8232 \cf2 Implement Review Analysis with CSV upload.\cf0 \
+\cf2 TASK 8\cf0 \uc0\u8232 \cf2 Implement Insight Map graph.\cf0 \
+\cf2 TASK 9\cf0 \uc0\u8232 \cf2 Implement Persona generation.\cf0 \
+\cf2 TASK 10\cf0 \uc0\u8232 \cf2 Implement Journey Map visualization.\cf0 \
+\cf2 TASK 11\cf0 \uc0\u8232 \cf2 Implement Opportunity Matrix.\cf0 \
+\cf2 TASK 12\cf0 \uc0\u8232 \cf2 Implement UX Report generator.\cf0 \
+\cf2 TASK 13\cf0 \uc0\u8232 \cf2 Implement project storage and research history.\cf0 \
+\cf2 TASK 14\cf0 \uc0\u8232 \cf2 Run full system integration test.\cf0 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \
+\pard\pardeftab720\sa240\partightenfactor0
+\cf2 TEST CONDITIONS\cf0 \
+\cf2 A user must be able to\cf0 \
+\cf2 1 create research project\cf0 \uc0\u8232 \cf2 2 input product idea\cf0 \uc0\u8232 \cf2 3 run research pipeline\cf0 \uc0\u8232 \cf2 4 upload review dataset\cf0 \uc0\u8232 \cf2 5 generate insights\cf0 \uc0\u8232 \cf2 6 generate personas\cf0 \uc0\u8232 \cf2 7 generate journey maps\cf0 \uc0\u8232 \cf2 8 generate opportunity matrix\cf0 \uc0\u8232 \cf2 9 generate UX report\cf0 \uc0\u8232 \cf2 10 reopen saved project\cf0 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \
+\pard\pardeftab720\sa240\partightenfactor0
+\cf2 IMPLEMENTATION RULE\cf0 \
+\cf2 Use the UI screenshots as layout reference.\cf0 \
+\cf2 Do not redesign the interface.\cf0 \
+\cf2 Match the UI flow and structure as closely as possible.\cf0 \
+\cf2 Focus on producing a working application.}
