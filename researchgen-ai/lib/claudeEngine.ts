@@ -48,7 +48,7 @@ async function callClaude(
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 4096,
+      max_tokens: 8192,
       system: systemMsg,
       messages: [{ role: 'user', content: prompt }],
     }),
@@ -126,13 +126,13 @@ function buildPart1Prompt(idea: IdeaInput): string {
 위 구조 그대로, 경쟁사명은 실제 관련 서비스로, featureComparison의 컬럼 키는 competitors의 name 값과 정확히 일치하게, 모든 텍스트는 한국어로 채워서 JSON만 반환하세요.`;
 }
 
-// ── Part 2: Review + InsightMap + Personas ─────────────────────
+// ── Part 2a: Review Analysis only ──────────────────────────────
 
-function buildPart2Prompt(idea: IdeaInput): string {
+function buildPart2aPrompt(idea: IdeaInput): string {
   return `제품 아이디어: "${idea.description}"
 카테고리: ${idea.category} | 플랫폼: ${idea.platforms.join(', ')}
 
-아래 JSON 형식으로 reviewAnalysis, insightMap, personas 3개 섹션을 생성하세요.
+아래 JSON 형식으로 reviewAnalysis 섹션을 생성하세요.
 숫자 필드는 반드시 숫자만, 모든 텍스트는 한국어로, JSON만 반환하세요.
 
 {
@@ -143,16 +143,29 @@ function buildPart2Prompt(idea: IdeaInput): string {
     "featureRequests": ["요청1", "요청2", "요청3", "요청4", "요청5"],
     "topicClusters": ["토픽1", "토픽2", "토픽3", "토픽4", "토픽5"],
     "reviews": [
-      {"id": "r1", "content": "리뷰 내용", "sentiment": "positive", "rating": 5},
-      {"id": "r2", "content": "리뷰 내용", "sentiment": "negative", "rating": 2},
-      {"id": "r3", "content": "리뷰 내용", "sentiment": "positive", "rating": 4},
-      {"id": "r4", "content": "리뷰 내용", "sentiment": "negative", "rating": 2},
-      {"id": "r5", "content": "리뷰 내용", "sentiment": "neutral",  "rating": 3},
-      {"id": "r6", "content": "리뷰 내용", "sentiment": "positive", "rating": 5},
-      {"id": "r7", "content": "리뷰 내용", "sentiment": "positive", "rating": 4},
-      {"id": "r8", "content": "리뷰 내용", "sentiment": "negative", "rating": 3}
+      {"id": "r1", "content": "실제 리뷰 내용 1~2문장", "sentiment": "positive", "rating": 5},
+      {"id": "r2", "content": "실제 리뷰 내용 1~2문장", "sentiment": "negative", "rating": 2},
+      {"id": "r3", "content": "실제 리뷰 내용 1~2문장", "sentiment": "positive", "rating": 4},
+      {"id": "r4", "content": "실제 리뷰 내용 1~2문장", "sentiment": "negative", "rating": 2},
+      {"id": "r5", "content": "실제 리뷰 내용 1~2문장", "sentiment": "neutral",  "rating": 3},
+      {"id": "r6", "content": "실제 리뷰 내용 1~2문장", "sentiment": "positive", "rating": 5},
+      {"id": "r7", "content": "실제 리뷰 내용 1~2문장", "sentiment": "positive", "rating": 4},
+      {"id": "r8", "content": "실제 리뷰 내용 1~2문장", "sentiment": "negative", "rating": 3}
     ]
-  },
+  }
+}`;
+}
+
+// ── Part 2b: InsightMap + Personas ─────────────────────────────
+
+function buildPart2bPrompt(idea: IdeaInput): string {
+  return `제품 아이디어: "${idea.description}"
+카테고리: ${idea.category} | 플랫폼: ${idea.platforms.join(', ')}
+
+아래 JSON 형식으로 insightMap과 personas 2개 섹션을 생성하세요.
+숫자 필드는 반드시 숫자만, 모든 텍스트는 한국어로, JSON만 반환하세요.
+
+{
   "insightMap": {
     "nodes": [
       {"id": "n1", "type": "ai",         "title": "제목", "description": "설명", "evidenceCount": 24, "confidence": 87, "position": {"x": 300, "y": 150}},
@@ -281,20 +294,24 @@ export async function generateResearchWithClaude(
 ): Promise<ResearchRun> {
   const key = apiKey.trim();
 
-  onProgress?.('Part 1/3 · AI 분석 + 경쟁사 분석 중...');
+  onProgress?.('1/4 · AI 분석 + 경쟁사 분석 중...');
   const part1 = await callClaude(key, buildPart1Prompt(idea)) as {
     aiAnalysis: ResearchRun['aiAnalysis'];
     competitorAnalysis: ResearchRun['competitorAnalysis'];
   };
 
-  onProgress?.('Part 2/3 · 리뷰 분석 + 인사이트 맵 + 페르소나 중...');
-  const part2 = await callClaude(key, buildPart2Prompt(idea)) as {
+  onProgress?.('2/4 · 리뷰 분석 중...');
+  const part2a = await callClaude(key, buildPart2aPrompt(idea)) as {
     reviewAnalysis: ResearchRun['reviewAnalysis'];
+  };
+
+  onProgress?.('3/4 · 인사이트 맵 + 페르소나 생성 중...');
+  const part2b = await callClaude(key, buildPart2bPrompt(idea)) as {
     insightMap: ResearchRun['insightMap'];
     personas: ResearchRun['personas'];
   };
 
-  onProgress?.('Part 3/3 · 사용자 여정 + 기회 지도 + UX 보고서 중...');
+  onProgress?.('4/4 · 사용자 여정 + 기회 지도 + UX 보고서 생성 중...');
   const part3 = await callClaude(key, buildPart3Prompt(idea)) as {
     journey: ResearchRun['journey'];
     opportunities: ResearchRun['opportunities'];
@@ -306,9 +323,9 @@ export async function generateResearchWithClaude(
   return {
     aiAnalysis:          part1.aiAnalysis,
     competitorAnalysis:  part1.competitorAnalysis,
-    reviewAnalysis:      part2.reviewAnalysis,
-    insightMap:          part2.insightMap,
-    personas:            part2.personas,
+    reviewAnalysis:      part2a.reviewAnalysis,
+    insightMap:          part2b.insightMap,
+    personas:            part2b.personas,
     journey:             part3.journey,
     opportunities:       part3.opportunities,
     report:              part3.report,
